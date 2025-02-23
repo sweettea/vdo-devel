@@ -1230,14 +1230,12 @@ static int __must_check process_vdo_message(struct vdo *vdo, unsigned int argc,
 			return vdo_message_dedupe_index(vdo->hash_zones, argv[0]);
 	}
 
-	if (atomic_cmpxchg(&vdo->processing_message, 0, 1) != 0)
+	if (!spin_trylock(&vdo->message_lock))
 		return -EBUSY;
 
 	result = process_vdo_message_locked(vdo, argc, argv);
 
-	/* Pairs with the implicit barrier in cmpxchg just above */
-	smp_wmb();
-	atomic_set(&vdo->processing_message, 0);
+	spin_unlock(&vdo->message_lock);
 	return result;
 }
 
@@ -1383,7 +1381,7 @@ static int perform_admin_operation(struct vdo *vdo, u32 starting_phase,
 	int result;
 	struct vdo_administrator *admin = &vdo->admin;
 
-	if (atomic_cmpxchg(&admin->busy, 0, 1) != 0) {
+	if (!spin_trylock(&admin->busy)) {
 		return vdo_log_error_strerror(VDO_COMPONENT_BUSY,
 					      "Can't start %s operation, another operation is already in progress",
 					      type);
@@ -1404,9 +1402,7 @@ static int perform_admin_operation(struct vdo *vdo, u32 starting_phase,
 	}
 
 	result = admin->completion.result;
-	/* pairs with implicit barrier in cmpxchg above */
-	smp_wmb();
-	atomic_set(&admin->busy, 0);
+	spin_unlock(&admin->busy);
 	return result;
 }
 

@@ -168,7 +168,7 @@ struct data_vio_pool;
 struct vdo_administrator {
 	struct vdo_completion completion;
 	struct admin_state state;
-	atomic_t busy;
+	spinlock_t busy;
 	u32 phase;
 	struct completion callback_sync;
 };
@@ -246,7 +246,7 @@ struct vdo {
 	const struct admin_state_code *suspend_type;
 	bool allocations_allowed;
 	bool dump_on_shutdown;
-	atomic_t processing_message;
+	spinlock_t message_lock;
 
 	/*
 	 * Statistics

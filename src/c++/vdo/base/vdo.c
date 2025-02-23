@@ -487,10 +487,12 @@ static int initialize_vdo(struct vdo *vdo, struct device_config *config,
 	vdo->starting_sector_offset = config->owning_target->begin;
 	vdo->instance = instance;
 	vdo->allocations_allowed = true;
+	spin_lock_init(&vdo->message_lock);
 	vdo_set_admin_state_code(&vdo->admin.state, VDO_ADMIN_STATE_NEW);
 	INIT_LIST_HEAD(&vdo->device_config_list);
 	vdo_initialize_completion(&vdo->admin.completion, vdo, VDO_ADMIN_COMPLETION);
 	init_completion(&vdo->admin.callback_sync);
+	spin_lock_init(&vdo->admin.busy);
 	mutex_init(&vdo->stats_mutex);
 	result = read_geometry_block(vdo);
 	if (result != VDO_SUCCESS) {
