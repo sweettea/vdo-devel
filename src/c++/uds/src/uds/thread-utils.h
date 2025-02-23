@@ -53,8 +53,6 @@ struct threads_barrier {
 #define UDS_MUTEX_INITIALIZER { .mutex = PTHREAD_MUTEX_INITIALIZER }
 #endif
 
-extern const bool UDS_DO_ASSERTIONS;
-
 unsigned int num_online_cpus(void);
 pid_t __must_check uds_get_thread_id(void);
 

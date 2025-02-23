@@ -15,8 +15,6 @@ static enum mutex_kind {
 	error_checking
 } hidden_mutex_kind = error_checking;
 
-const bool UDS_DO_ASSERTIONS = true;
-
 /**********************************************************************/
 static void initialize_mutex_kind(void)
 {
