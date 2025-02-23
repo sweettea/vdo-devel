@@ -52,11 +52,8 @@ static enum mutex_kind get_mutex_kind(void)
 	return hidden_mutex_kind;
 }
 
-/*
- * This function should only be called directly in places where making
- * assertions is not safe.
- */
-int uds_initialize_mutex(struct mutex *mutex, bool assert_on_error)
+/**********************************************************************/
+int uds_init_mutex(struct mutex *mutex)
 {
 	pthread_mutexattr_t attr;
 	int result;
@@ -71,9 +68,8 @@ int uds_initialize_mutex(struct mutex *mutex, bool assert_on_error)
 	if (get_mutex_kind() == error_checking)
 		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
 
-	result = pthread_mutex_init(&mutex->mutex, &attr);
-	if ((result != 0) && assert_on_error)
-		VDO_ASSERT_LOG_ONLY((result == 0), "pthread_mutex_init error");
+	// While this function returns an int, it's guaranteed to always be 0.
+	pthread_mutex_init(&mutex->mutex, &attr);
 
 	result2 = pthread_mutexattr_destroy(&attr);
 	if (result2 != 0) {
@@ -84,12 +80,6 @@ int uds_initialize_mutex(struct mutex *mutex, bool assert_on_error)
 	}
 
 	return result;
-}
-
-/**********************************************************************/
-int uds_init_mutex(struct mutex *mutex)
-{
-	return uds_initialize_mutex(mutex, UDS_DO_ASSERTIONS);
 }
 
 /**********************************************************************/

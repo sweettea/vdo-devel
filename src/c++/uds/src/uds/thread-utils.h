@@ -137,7 +137,6 @@ static inline void cond_resched(void)
 	(void) sched_yield();
 }
 
-int uds_initialize_mutex(struct mutex *mutex, bool assert_on_error);
 int __must_check uds_init_mutex(struct mutex *mutex);
 int uds_destroy_mutex(struct mutex *mutex);
 void uds_lock_mutex(struct mutex *mutex);
