@@ -7,6 +7,7 @@
 
 #include <linux/blkdev.h>
 #include <linux/err.h>
+#include <linux/mutex.h>
 
 #include "fileUtils.h"
 #include "logger.h"
@@ -59,11 +60,7 @@ dm_bufio_client_create(struct block_device *bdev,
 		return ERR_PTR(-ENOMEM);
 
 
-	result = uds_init_mutex(&client->buffer_mutex);
-	if (result != UDS_SUCCESS) {
-		dm_bufio_client_destroy(client);
-		return ERR_PTR(-result);
-	}
+	mutex_init(&client->buffer_mutex);
 
 	client->bytes_per_page = block_size;
 	client->bdev = bdev;
@@ -81,7 +78,7 @@ void dm_bufio_client_destroy(struct dm_bufio_client *client)
 		vdo_free(buffer);
 	}
 
-	uds_destroy_mutex(&client->buffer_mutex);
+	mutex_destroy(&client->buffer_mutex);
 	vdo_free(client);
 }
 
@@ -98,12 +95,12 @@ void *dm_bufio_new(struct dm_bufio_client *client,
 	struct dm_buffer *buffer = NULL;
 	off_t block_offset = block * client->bytes_per_page;
 
-	uds_lock_mutex(&client->buffer_mutex);
+	mutex_lock(&client->buffer_mutex);
 	if (client->buffer_list != NULL) {
 		buffer = client->buffer_list;
 		client->buffer_list = buffer->next;
 	}
-	uds_unlock_mutex(&client->buffer_mutex);
+	mutex_unlock(&client->buffer_mutex);
 
 	if (buffer == NULL) {
 		result = vdo_allocate(1, struct dm_buffer, __func__, &buffer);
@@ -178,10 +175,10 @@ void dm_bufio_release(struct dm_buffer *buffer)
 {
 	struct dm_bufio_client *client = buffer->client;
 
-	uds_lock_mutex(&client->buffer_mutex);
+	mutex_lock(&client->buffer_mutex);
 	buffer->next = client->buffer_list;
 	client->buffer_list = buffer;
-	uds_unlock_mutex(&client->buffer_mutex);
+	mutex_unlock(&client->buffer_mutex);
 }
 
 /*

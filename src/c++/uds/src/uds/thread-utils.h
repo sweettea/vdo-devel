@@ -18,7 +18,9 @@
 #include <semaphore.h>
 #include <stdbool.h>
 #endif /* __KERNEL__ */
+
 #if !(defined __KERNEL__) || defined(TEST_INTERNAL)
+#include <linux/mutex.h>
 
 #include "errors.h"
 #include "time-utils.h"

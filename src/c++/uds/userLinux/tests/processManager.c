@@ -40,7 +40,7 @@ pid_t forkChild(void)
     childCount = 0;
   } else if (fork_pid > 0) {
     // parent
-    uds_lock_mutex(&childMutex);
+    mutex_lock(&childMutex);
     pid_t *newChildren;
     UDS_ASSERT_SUCCESS(vdo_reallocate_memory(children,
                                              childCount * sizeof(pid_t),
@@ -48,7 +48,7 @@ pid_t forkChild(void)
                                              __func__, &newChildren));
     children = newChildren;
     children[childCount++] = fork_pid;
-    uds_unlock_mutex(&childMutex);
+    mutex_unlock(&childMutex);
   }
   return fork_pid;
 }
@@ -96,7 +96,7 @@ FILE *openProcessPipe(const char *command, pid_t *pidPtr)
 /**********************************************************************/
 int getStatus(pid_t pid)
 {
-  uds_lock_mutex(&childMutex);
+  mutex_lock(&childMutex);
   int status;
   waitpid(pid, &status, 0);
   for (unsigned int i = 0; i < childCount; i++) {
@@ -105,7 +105,7 @@ int getStatus(pid_t pid)
       break;
     }
   }
-  uds_unlock_mutex(&childMutex);
+  mutex_unlock(&childMutex);
   return status;
 }
 
@@ -118,7 +118,7 @@ void expectStatus(pid_t pid, int expectedStatus)
 /**********************************************************************/
 void killChildren(void)
 {
-  uds_lock_mutex(&childMutex);
+  mutex_lock(&childMutex);
   //  killing = true;
   for (unsigned int i = 0; i < childCount; i++) {
     if (children[i] == IGNORE_CHILD) {
@@ -132,5 +132,5 @@ void killChildren(void)
   free(children);
   children = NULL;
   childCount = 0;
-  uds_unlock_mutex(&childMutex);
+  mutex_unlock(&childMutex);
 }

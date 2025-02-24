@@ -63,7 +63,7 @@ static void open_socket_locked(void)
 /**********************************************************************/
 void mini_openlog(const char *ident, int option, int facility)
 {
-	uds_lock_mutex(&mutex);
+	mutex_lock(&mutex);
 	close_locked();
 	vdo_free(log_ident);
 	if (vdo_duplicate_string(ident, NULL, &log_ident) != VDO_SUCCESS)
@@ -73,7 +73,7 @@ void mini_openlog(const char *ident, int option, int facility)
 	default_facility = facility;
 	if (log_option & LOG_NDELAY)
 		open_socket_locked();
-	uds_unlock_mutex(&mutex);
+	mutex_unlock(&mutex);
 }
 
 /**********************************************************************/
@@ -194,27 +194,27 @@ void mini_syslog_pack(int priority,
 		      const char *fmt2,
 		      va_list args2)
 {
-	uds_lock_mutex(&mutex);
+	mutex_lock(&mutex);
 	log_it(priority, prefix, fmt1, args1, fmt2, args2);
-	uds_unlock_mutex(&mutex);
+	mutex_unlock(&mutex);
 }
 
 void mini_vsyslog(int priority, const char *format, va_list ap)
 {
 	va_list dummy;
 	memset(&dummy, 0, sizeof(dummy));
-	uds_lock_mutex(&mutex);
+	mutex_lock(&mutex);
 	log_it(priority, NULL, format, ap, NULL, dummy);
-	uds_unlock_mutex(&mutex);
+	mutex_unlock(&mutex);
 }
 
 void mini_closelog(void)
 {
-	uds_lock_mutex(&mutex);
+	mutex_lock(&mutex);
 	close_locked();
 	vdo_free(log_ident);
 	log_ident = NULL;
 	log_option = 0;
 	default_facility = LOG_USER;
-	uds_unlock_mutex(&mutex);
+	mutex_unlock(&mutex);
 }
