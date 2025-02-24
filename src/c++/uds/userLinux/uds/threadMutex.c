@@ -10,46 +10,6 @@
 #include "string-utils.h"
 #include "thread-utils.h"
 
-static enum mutex_kind {
-	fast_adaptive,
-	error_checking
-} hidden_mutex_kind = error_checking;
-
-/**********************************************************************/
-static void initialize_mutex_kind(void)
-{
-	static const char UDS_MUTEX_KIND_ENV[] = "UDS_MUTEX_KIND";
-	const char *mutex_kind_string = getenv(UDS_MUTEX_KIND_ENV);
-
-#ifdef NDEBUG
-	/*
-	 * Enabling error checking on mutexes enables a great performance loss,
-	 * so we only enable it in certain circumstances.
-	 */
-	hidden_mutex_kind = fast_adaptive;
-#endif
-	if (mutex_kind_string != NULL) {
-		if (strcmp(mutex_kind_string, "error-checking") == 0)
-			hidden_mutex_kind = error_checking;
-		else if (strcmp(mutex_kind_string, "fast-adaptive") == 0)
-			hidden_mutex_kind = fast_adaptive;
-		else
-			VDO_ASSERT_LOG_ONLY(false,
-					    "environment variable %s had unexpected value '%s'",
-					    UDS_MUTEX_KIND_ENV,
-					    mutex_kind_string);
-	}
-}
-
-/**********************************************************************/
-static enum mutex_kind get_mutex_kind(void)
-{
-	static atomic_t once_state = ATOMIC_INIT(0);
-
-	vdo_perform_once(&once_state, initialize_mutex_kind);
-	return hidden_mutex_kind;
-}
-
 /**********************************************************************/
 int uds_init_mutex(struct mutex *mutex)
 {
@@ -63,8 +23,9 @@ int uds_init_mutex(struct mutex *mutex)
 		return result;
 	}
 
-	if (get_mutex_kind() == error_checking)
-		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+#ifndef NDEBUG
+	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+#endif
 
 	// While this function returns an int, it's guaranteed to always be 0.
 	pthread_mutex_init(&mutex->mutex, &attr);
