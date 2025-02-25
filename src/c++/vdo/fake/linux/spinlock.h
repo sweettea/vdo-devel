@@ -20,6 +20,7 @@ typedef struct mutex spinlock_t;
 #define spin_unlock(lock) mutex_unlock(lock)
 #define spin_lock_bh(lock) mutex_lock(lock)
 #define spin_unlock_bh(lock) mutex_unlock(lock)
+#define spin_trylock(lock) mutex_trylock(lock)
 
 typedef struct mutex rwlock_t;
 

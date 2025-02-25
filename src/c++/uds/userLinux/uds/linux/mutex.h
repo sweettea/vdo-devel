@@ -30,6 +30,7 @@ int mutex_init(struct mutex *mutex);
 #define mutex_destroy(M) pthread_mutex_destroy(&(M)->mutex)
 #define mutex_lock(M)    pthread_mutex_lock(&(M)->mutex)
 #define mutex_unlock(M)  pthread_mutex_unlock(&(M)->mutex)
+#define mutex_trylock(M) pthread_mutex_trylock(&(M)->mutex)
 
 #else
 
@@ -37,6 +38,7 @@ int mutex_init(struct mutex *mutex);
 #define mutex_destroy(M) VDO_ASSERT_LOG_ONLY((pthread_mutex_destroy(&(M)->mutex) == 0), "pthread destroy error")
 #define mutex_lock(M) VDO_ASSERT_LOG_ONLY((pthread_mutex_lock(&(M)->mutex) == 0), "pthread lock error")
 #define mutex_unlock(M) VDO_ASSERT_LOG_ONLY((pthread_mutex_unlock(&(M)->mutex) == 0), "pthread unlock error")
+#define mutex_trylock(M) VDO_ASSERT_LOG_ONLY((pthread_mutex_trylock(&(M)->mutex) != EINVAL), "pthread trylock error")
 #endif /* !NDEBUG */
 
 #endif // LINUX_MUTEX_H
