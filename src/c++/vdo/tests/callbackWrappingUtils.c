@@ -35,13 +35,13 @@ static void tearDown(void)
 {
   vdo_int_map_free(vdo_forget(wrapMap));
   vdo_int_map_free(vdo_forget(enqueueMap));
-  uds_destroy_mutex(&mutex);
+  mutex_destroy(&mutex);
 }
 
 /**********************************************************************/
 void initializeCallbackWrapping(void)
 {
-  VDO_ASSERT_SUCCESS(uds_init_mutex(&mutex));
+  mutex_init(&mutex);
   VDO_ASSERT_SUCCESS(vdo_int_map_create(0, &wrapMap));
   VDO_ASSERT_SUCCESS(vdo_int_map_create(0, &enqueueMap));
   registerTearDownAction(tearDown);
@@ -62,13 +62,13 @@ static void wrapCompletion(struct vdo_completion *completion,
   };
 
   SavedActions *old;
-  uds_lock_mutex(&mutex);
+  mutex_lock(&mutex);
   VDO_ASSERT_SUCCESS(vdo_int_map_put(wrapMap,
                                      (uintptr_t) completion,
                                      actions,
                                      false,
                                      (void **) &old));
-  uds_unlock_mutex(&mutex);
+  mutex_unlock(&mutex);
   CU_ASSERT_PTR_NULL(old);
 
   completion->callback      = callback;
@@ -96,14 +96,14 @@ static bool runSaved(struct vdo_completion *completion)
   bool requeued = false;
   bool *old = NULL;
 
-  uds_lock_mutex(&mutex);
+  mutex_lock(&mutex);
   SavedActions *actions = vdo_int_map_remove(wrapMap, (uintptr_t) completion);
   VDO_ASSERT_SUCCESS(vdo_int_map_put(enqueueMap,
                                      (uintptr_t) completion,
                                      &requeued,
                                      false,
                                      (void **) &old));
-  uds_unlock_mutex(&mutex);
+  mutex_unlock(&mutex);
 
   CU_ASSERT_PTR_NOT_NULL(actions);
   CU_ASSERT_PTR_NULL(old);
@@ -117,9 +117,9 @@ static bool runSaved(struct vdo_completion *completion)
     return true;
   }
 
-  uds_lock_mutex(&mutex);
+  mutex_lock(&mutex);
   vdo_int_map_remove(enqueueMap, (uintptr_t) completion);
-  uds_unlock_mutex(&mutex);
+  mutex_unlock(&mutex);
 
   return false;
 }
@@ -145,11 +145,11 @@ void runSavedCallbackAssertNoRequeue(struct vdo_completion *completion)
 /**********************************************************************/
 void notifyEnqueue(struct vdo_completion *completion)
 {
-  uds_lock_mutex(&mutex);
+  mutex_lock(&mutex);
   bool *requeued = vdo_int_map_remove(enqueueMap, (uintptr_t) completion);
   if (requeued != NULL) {
     *requeued = true;
   }
-  uds_unlock_mutex(&mutex);
+  mutex_unlock(&mutex);
 }
 
