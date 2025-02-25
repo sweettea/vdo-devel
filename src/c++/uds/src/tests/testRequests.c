@@ -5,6 +5,8 @@
 
 #include "testRequests.h"
 
+#include <linux/mutex.h>
+
 #include "assertions.h"
 #include "thread-utils.h"
 

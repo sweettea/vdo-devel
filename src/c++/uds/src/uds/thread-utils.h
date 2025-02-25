@@ -33,10 +33,6 @@ struct thread;
 
 void vdo_initialize_threads_mutex(void);
 #else
-struct mutex {
-	pthread_mutex_t mutex;
-};
-
 struct semaphore {
 	sem_t semaphore;
 };
@@ -48,12 +44,6 @@ struct thread {
 struct threads_barrier {
 	pthread_barrier_t barrier;
 };
-
-#ifndef NDEBUG
-#define UDS_MUTEX_INITIALIZER { .mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP }
-#else
-#define UDS_MUTEX_INITIALIZER { .mutex = PTHREAD_MUTEX_INITIALIZER }
-#endif
 
 unsigned int num_online_cpus(void);
 pid_t __must_check uds_get_thread_id(void);
@@ -136,11 +126,6 @@ static inline void cond_resched(void)
 	 */
 	(void) sched_yield();
 }
-
-int __must_check uds_init_mutex(struct mutex *mutex);
-int uds_destroy_mutex(struct mutex *mutex);
-void uds_lock_mutex(struct mutex *mutex);
-void uds_unlock_mutex(struct mutex *mutex);
 
 void initialize_threads_barrier(struct threads_barrier *barrier,
 				unsigned int thread_count);
